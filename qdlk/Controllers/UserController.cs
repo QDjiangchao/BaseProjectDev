@@ -58,7 +58,7 @@ namespace qdlk.Controllers
                     }
                     #endregion
 
-                    return new ReturnModel("", conn.Query<T_user>(string.Format(" select * from t_user where {0}", strWhere)).ToList());
+                    return new ReturnModel("", conn.Query<T_user>(string.Format(" select * from t_user where 1=1 {0}", strWhere)).ToList());
                 }
                 catch (Exception ex)
                 {
@@ -98,7 +98,7 @@ namespace qdlk.Controllers
                     }
                     #endregion
 
-                    var dblist = conn.Query<T_user>(string.Format(" select * from t_user where {0}", strWhere)).ToList();
+                    var dblist = conn.Query<T_user>(string.Format(" select * from t_user where 1=1 {0}", strWhere)).ToList();
 
                     if (dblist.Count > 0)
                     {

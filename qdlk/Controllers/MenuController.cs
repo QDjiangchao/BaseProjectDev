@@ -52,7 +52,7 @@ namespace qdlk.Controllers
                     }
                     #endregion
 
-                    return new ReturnModel("", conn.Query<T_sys_menus>(string.Format(" select * from T_sys_menus where {0}", strWhere)).ToList());
+                    return new ReturnModel("", conn.Query<T_sys_menus>(string.Format(" select * from T_sys_menus where 1=1 {0}", strWhere)).ToList());
                 }
                 catch (Exception ex)
                 {
@@ -92,7 +92,7 @@ namespace qdlk.Controllers
                     }
                     #endregion 
 
-                    var dblist = conn.Query<T_sys_menus>(string.Format(" select * from T_sys_menus where {0}", strWhere)).ToList();
+                    var dblist = conn.Query<T_sys_menus>(string.Format(" select * from T_sys_menus where 1=1 {0}", strWhere)).ToList();
 
                     if (dblist.Count > 0)
                     {
