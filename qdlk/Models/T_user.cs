@@ -13,4 +13,13 @@ namespace qdlk.Models
         public DateTime dupdatedate { get; set; }
         public int idel { get; set; }
     }
+
+    public class UserDto : T_user
+    {
+        /// <summary>
+        /// 分页参数
+        /// </summary>
+        public Pagers pagers { get; set; }
+
+    }
 }

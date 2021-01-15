@@ -42,7 +42,23 @@ namespace qdlk.Controllers
             {
                 try
                 {
-                    return new ReturnModel("", conn.Query<T_user>("select * from t_user").ToList());
+                    string strWhere = "";
+                    #region 拼接查询条件 
+                    if (!string.IsNullOrWhiteSpace(user.cusercode))
+                    {
+                        strWhere += " and  cusercode ='" + user.cusercode + "'";
+                    }
+                    if (!string.IsNullOrWhiteSpace(user.cusername))
+                    {
+                        strWhere += " and  cusername like'%" + user.cusername + "%'";
+                    }
+                    if (!string.IsNullOrWhiteSpace(user.idel.ToString()))
+                    {
+                        strWhere += " and  idel ='" + user.idel + "'";
+                    }
+                    #endregion
+
+                    return new ReturnModel("", conn.Query<T_user>(string.Format(" select * from t_user where {0}", strWhere)).ToList());
                 }
                 catch (Exception ex)
                 {
@@ -50,18 +66,79 @@ namespace qdlk.Controllers
                 }
             }
         }
-
+        /// <summary>
+        /// 获取用户信息分页
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         [HttpPost]
-        public ActionResult<ReturnModel> AddUser([FromBody] T_user user)
+        public ActionResult<ReturnModel> GetUserListByPager([FromBody] UserDto user)
         {
-            user.cpwd = CommBll.DESEncrypt(user.cpwd, Configuration.GetSection("DESKeys").Value);
+            //读取appsettig配置
+            //var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json");
+            //var configuration = builder.Build(); 
 
             using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
             {
                 try
                 {
-                    conn.Execute("insert into T_user(cusercode, cusername, cpwd, cmemo, isex, idel) values(@cusercode, @cusername, @cpwd, @cmemo, @isex, @idel)", user);
-                    return new ReturnModel();
+                    string strWhere = "";
+                    #region 拼接查询条件 
+                    if (!string.IsNullOrWhiteSpace(user.cusercode))
+                    {
+                        strWhere += " and  cusercode ='" + user.cusercode + "'";
+                    }
+                    if (!string.IsNullOrWhiteSpace(user.cusername))
+                    {
+                        strWhere += " and  cusername like'%" + user.cusername + "%'";
+                    }
+                    if (!string.IsNullOrWhiteSpace(user.idel.ToString()))
+                    {
+                        strWhere += " and  idel ='" + user.idel + "'";
+                    }
+                    #endregion
+
+                    var dblist = conn.Query<T_user>(string.Format(" select * from t_user where {0}", strWhere)).ToList();
+
+                    if (dblist.Count > 0)
+                    {
+                        user.pagers.Records = dblist.Skip((user.pagers.PageIndex - 1) * user.pagers.PageSize).Take(user.pagers.PageSize).ToList();
+                        user.pagers.Totals = dblist.Count;
+                    }
+
+                    return new ReturnModel("", user.pagers);
+                }
+                catch (Exception ex)
+                {
+                    return new ReturnModel(ex.Message, null);
+                }
+            }
+        }
+        /// <summary>
+        /// 添加用户
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult<ReturnModel> AddUser([FromBody] T_user user)
+        {
+            using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
+            {
+                try
+                {
+                    if (!exits(user))
+                    {
+                        user.cpwd = CommBll.DESEncrypt(user.cpwd, Configuration.GetSection("DESKeys").Value);
+                        conn.Execute("insert into T_user(cusercode, cusername, cpwd, cmemo, isex, idel) values(@cusercode, @cusername, @cpwd, @cmemo, @isex, @idel)", user);
+                        //TODO:用户角色更新
+                        //TODO:用户权限更新
+                        return new ReturnModel();
+                    }
+                    else
+                    {
+                        return new ReturnModel(user.cusercode + " 用户编码重复,请确认", null);
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -97,5 +174,60 @@ namespace qdlk.Controllers
                 }
             }
         }
+
+
+        /// <summary>
+        /// 编辑用户
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult<ReturnModel> EditUser([FromBody] T_user user)
+        {
+            using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(user.cpwd))
+                    {
+                        user.cpwd = CommBll.DESEncrypt(user.cpwd, Configuration.GetSection("DESKeys").Value);
+                    }
+                    else
+                    {
+                        var dbuser = conn.Query<T_user>(" select * from t_user where cusercode=@cusercode", user).FirstOrDefault();
+                        user.cpwd = dbuser.cpwd;
+                    }
+                    conn.Execute(@"update T_user
+                                    set cusername  =@cusername,
+                                        cpwd=@cpwd,
+                                        cmemo=@cmemo,
+                                        isex=@isex,
+                                        idel=@idel,
+                                        dupdatedate=getdate()
+                                    where cusercode = @cusercode", user);
+
+                    //TODO:用户角色更新
+                    //TODO:用户权限更新
+                    return new ReturnModel();
+                }
+                catch (Exception ex)
+                {
+                    return new ReturnModel(ex.Message, null);
+                }
+            }
+        }
+        /// <summary>
+        /// 是否存在
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool exits(T_user user)
+        {
+            using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
+            {
+                return conn.Query<int>(" select * from t_user where cusercode=@cusercode", user).FirstOrDefault() > 0 ? true : false;
+            }
+        }
+
     }
 }
