@@ -23,9 +23,7 @@ namespace qdlk.Controllers
             Configuration = configuration;
         }
 
-        #endregion
-
-
+        #endregion 
         /// <summary>
         /// 获取全部菜单list
         /// </summary>
@@ -110,8 +108,49 @@ namespace qdlk.Controllers
                 }
             }
         }
+        /// <summary>
+        /// 添加菜单
+        /// </summary>
+        /// <param name="menus"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public ActionResult<ReturnModel> AddMenu([FromBody] T_sys_menus menus)
+        {
+            using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
+            {
+                try
+                {
+                    if (!exits(menus))
+                    {
+                        conn.Execute(@"insert into T_sys_menus
+                                                        ( cmenucode, cmenuname, cparentcode, isort, idel)
+                                                    values (@cmenucode, @cmenuname, @cparentcode, @isort, @idel)", menus);
+                        return new ReturnModel();
+                    }
+                    else
+                    {
+                        return new ReturnModel(menus.cmenucode + " 菜单编码重复,请确认", null);
+                    }
 
-
-
+                }
+                catch (Exception ex)
+                {
+                    return new ReturnModel(ex.Message, null);
+                }
+            }
+        }
+        /// <summary>
+        /// 是否存在
+        /// </summary>
+        /// <param name="menus"></param>
+        /// <returns></returns>
+        [HttpPost]
+        public bool exits(T_sys_menus menus)
+        {
+            using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))
+            {
+                return conn.Query<int>(" select * from T_sys_menus where cmenucode=@cmenucode", menus).FirstOrDefault() > 0 ? true : false;
+            }
+        }
     }
 }

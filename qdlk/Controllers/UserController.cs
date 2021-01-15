@@ -221,6 +221,7 @@ namespace qdlk.Controllers
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
+        [HttpPost]
         public bool exits(T_user user)
         {
             using (IDbConnection conn = new SqlConnection(Configuration.GetSection("ConnectionStrings:SQLConnectionString").Value))

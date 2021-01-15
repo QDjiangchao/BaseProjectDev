@@ -258,7 +258,7 @@ namespace qdlk.CommonBussiness
                         }
                         catch (Exception ex)
                         {
-                            return null;
+                            return ex.Message;
                         }
                     }
                 }
@@ -303,7 +303,7 @@ namespace qdlk.CommonBussiness
                         }
                         catch (Exception ex)
                         {
-                            return null;
+                            return ex.Message;
                         }
                     }
                 }
